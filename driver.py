@@ -4,20 +4,20 @@ import openpyxl
 import datetime
 
 # 関数宣言
-def count_elems(css_links):
-    count = driver.find_elements_by_css_selector(css_links)
+def count_elems(css_links_first):
+    count = driver.find_elements_by_css_selector(css_links_first)
     elem_count = len(count) + 1
     return elem_count
 
-def get_by_nth_child(kancho_name, css_links, elems, latter_str):
+def get_by_nth_child(kancho_name, css_links_first, elems, css_links_latter):
     for n in range(1, elems):
-        css_links_perfect = css_links + ":nth-child(" + str(n) + latter_str
+        css_links_perfect = css_links_first + ":nth-child(" + str(n) + css_links_latter
         print(kancho_name + " No." + str(n) + ": " + css_links_perfect)
         get_data(css_links_perfect, n)
 
-def get_by_nth_of_type(kancho_name, css_links, elems, latter_str):
+def get_by_nth_of_type(kancho_name, css_links_first, elems, css_links_latter):
     for n in range(1, elems):
-        css_links_perfect = css_links + ":nth-of-type(" + str(n) + latter_str
+        css_links_perfect = css_links_first + ":nth-of-type(" + str(n) + css_links_latter
         print(kancho_name + " No." + str(n) + ": " + css_links_perfect)
         get_data(css_links_perfect, n)
 
@@ -52,57 +52,28 @@ driver.implicitly_wait(5) # 要素が見つからなければ5秒待つ設定
 data_list = [] # 読み取り結果を格納する
 
 for value in row_values_list:
-    kancho_name = value[0]
-    kancho_url = value[1]
-    css_date = value[2]
-    css_links = value[3]
+    kancho_name = str(value[0])
+    kancho_url = str(value[1])
+    css_date = str(value[2])
+    css_links_first = str(value[3])
+    css_links_latter = str(value[4])
+    nth_of_type = bool(value[5])
     
     driver.get(kancho_url)
 
     date_elem = driver.find_element(By.CSS_SELECTOR, css_date)
     date_text = date_elem.text
 
-    if kancho_name == "財務省":
-        elems = count_elems(css_links)
-        get_by_nth_child(kancho_name, css_links, elems, ") > dl > dd > a")
-    elif kancho_name == "外務省":
-        elems = count_elems(css_links)
-        get_by_nth_child(kancho_name, css_links, elems, ") > a")
-    elif kancho_name == "法務省":
-        elems = count_elems(css_links)
-        continue
-        get_by_nth_child(kancho_name, css_links, elems, ") > a")
-    elif kancho_name == "厚生労働省":
-        elems = count_elems(css_links)
-        get_by_nth_child(kancho_name, css_links, elems, ") > a")   
-    elif kancho_name == "農林水産省":
-        elems = count_elems(css_links)
-        get_by_nth_child(kancho_name, css_links, elems, ") > dd > a")   
-    elif kancho_name == "防衛省":
-        # 2月でsectionにidがつけられているので、可用性改善が必要
-        elems = count_elems(css_links)
-        get_by_nth_child(kancho_name, css_links, elems, ") > span.news__title > a")   
-    elif kancho_name == "文部科学省":
-        elems = count_elems(css_links)
-        get_by_nth_child(kancho_name, css_links, elems, ") > a")
-    elif kancho_name == "経済産業省":
-        elems = count_elems(css_links)
-        get_by_nth_child(kancho_name, css_links, elems, ") > div.left.txt_box > a")
-    elif kancho_name == "総務省":
-        elems = count_elems(css_links)
-        get_by_nth_of_type(kancho_name, css_links, elems, ") > a")
-    elif kancho_name == "環境省":
-        elems = count_elems(css_links)
-        get_by_nth_of_type(kancho_name, css_links, elems, ") > a")
-    elif kancho_name == "国土交通省":
-        elems = count_elems(css_links)
-        get_by_nth_of_type(kancho_name, css_links, elems, ") > div > p > a")
-    else:
+    if kancho_name == "法務省":
         continue
 
+    elems = count_elems(css_links_first)
+    if nth_of_type == True:
+        get_by_nth_of_type(kancho_name, css_links_first, elems, css_links_latter)
+    else:
+        get_by_nth_child(kancho_name, css_links_first, elems, css_links_latter)
+
 driver.quit()
-# print(data_list)
-# exit()
 
 # 新しいブックへの記入と保存
 wb_new = openpyxl.Workbook()
@@ -111,7 +82,7 @@ ws_new = wb_new.worksheets[0]
 row_num = 1
 
 for data in data_list :
-    ws_new.cell(row_num, 1).value = data[0] # 官庁名
+    ws_new.cell(row_num, 1).value = data[0] #官庁名
     ws_new.cell(row_num, 2).value = data[1] #日付
     ws_new.cell(row_num, 3).value = data[2] #テキスト
     ws_new.cell(row_num, 4).value = data[3] #リンク
