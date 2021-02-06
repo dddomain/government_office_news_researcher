@@ -1,5 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import valid
+from valid import validation
+from valid import announce
 import openpyxl
 import datetime
 
@@ -9,26 +12,26 @@ def count_elems(css_links_first):
     elem_count = len(count) + 1
     return elem_count
 
-def get_by_nth_child(kancho_name, css_links_first, elems, css_links_latter):
+def access_by_nth_child(kancho_name, css_links_first, elems, css_links_latter):
     for n in range(1, elems):
         css_links_perfect = css_links_first + ":nth-child(" + str(n) + css_links_latter
         print(kancho_name + " No." + str(n) + ": " + css_links_perfect)
-        get_data(css_links_perfect, n)
+        get_data(css_date, css_links_perfect, n)
 
-def get_by_nth_of_type(kancho_name, css_links_first, elems, css_links_latter):
+def access_by_nth_of_type(kancho_name, css_links_first, elems, css_links_latter):
     for n in range(1, elems):
         css_links_perfect = css_links_first + ":nth-of-type(" + str(n) + css_links_latter
         print(kancho_name + " No." + str(n) + ": " + css_links_perfect)
-        get_data(css_links_perfect, n)
+        get_data(css_date, css_links_perfect, n)
 
-def get_data(css_links_perfect, n):
+def get_data(css_date, css_links_perfect, n):
+
     links = driver.find_elements(By.CSS_SELECTOR, css_links_perfect)
     for link in links:
         link_text = link.text
         link_url = link.get_attribute("href")
         data_list.append([kancho_name, date_text, link_text, link_url, n])
     return data_list
-
 
 # URLリストの読み込み
 wb = openpyxl.load_workbook("官庁新着情報URL.xlsx")
@@ -64,14 +67,17 @@ for value in row_values_list:
     date_elem = driver.find_element(By.CSS_SELECTOR, css_date)
     date_text = date_elem.text
 
-    if kancho_name == "法務省":
+    # 日付一致のバリデーション
+    get_bool = validation(kancho_name, date_text)
+    if get_bool == False :
+        valid.announce(kancho_name, valid.today)  
         continue
 
     elems = count_elems(css_links_first)
     if nth_of_type == True:
-        get_by_nth_of_type(kancho_name, css_links_first, elems, css_links_latter)
+        access_by_nth_of_type(kancho_name, css_links_first, elems, css_links_latter)
     else:
-        get_by_nth_child(kancho_name, css_links_first, elems, css_links_latter)
+        access_by_nth_child(kancho_name, css_links_first, elems, css_links_latter)
 
 driver.quit()
 
@@ -90,5 +96,4 @@ for data in data_list :
 
     row_num += 1
 
-today = datetime.date.today()
-wb_new.save(str(format(today, '%Y%m%d')) + "官庁新着情報.xlsx")
+wb_new.save(str(format(valid.today, '%Y%m%d')) + "官庁新着情報.xlsx")
